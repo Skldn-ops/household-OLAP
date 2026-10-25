@@ -1,0 +1,243 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" pages="2">
+  <diagram name="OLAP — звезда" id="page0">
+    <mxGraphModel dx="2308" dy="1092" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1740" pageHeight="1180" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="dim_date" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontSize=14;" value="dim_date" vertex="1">
+          <mxGeometry height="192" width="390" x="30" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date.date_key" parent="dim_date" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="&lt;b&gt;PK&lt;/b&gt; date_key | DATE" vertex="1">
+          <mxGeometry height="27" width="390" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date.year_no" parent="dim_date" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="year_no | SMALLINT" vertex="1">
+          <mxGeometry height="27" width="390" y="57" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date.quarter_no" parent="dim_date" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="quarter_no | SMALLINT" vertex="1">
+          <mxGeometry height="27" width="390" y="84" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date.month_no" parent="dim_date" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="month_no | SMALLINT" vertex="1">
+          <mxGeometry height="27" width="390" y="111" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date.month_start" parent="dim_date" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="month_start | DATE" vertex="1">
+          <mxGeometry height="27" width="390" y="138" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_date.day_no" parent="dim_date" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="day_no | SMALLINT" vertex="1">
+          <mxGeometry height="27" width="390" y="165" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_apartment" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontSize=14;" value="dim_apartment" vertex="1">
+          <mxGeometry height="408" width="430" x="30" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_apartment.apartment_key" parent="dim_apartment" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="&lt;b&gt;PK&lt;/b&gt; apartment_key | INTEGER" vertex="1">
+          <mxGeometry height="27" width="430" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_apartment.source_apartment_id" parent="dim_apartment" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="&lt;b&gt;UQ&lt;/b&gt; source_apartment_id | BIGINT" vertex="1">
+          <mxGeometry height="27" width="430" y="57" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_apartment.building_id" parent="dim_apartment" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="building_id | INTEGER" vertex="1">
+          <mxGeometry height="27" width="430" y="84" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_apartment.city_name" parent="dim_apartment" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="city_name | VARCHAR(80)" vertex="1">
+          <mxGeometry height="27" width="430" y="111" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_apartment.district_name" parent="dim_apartment" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="district_name | VARCHAR(80)" vertex="1">
+          <mxGeometry height="27" width="430" y="138" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_apartment.street" parent="dim_apartment" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="street | VARCHAR(120)" vertex="1">
+          <mxGeometry height="27" width="430" y="165" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_apartment.house_number" parent="dim_apartment" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="house_number | VARCHAR(20)" vertex="1">
+          <mxGeometry height="27" width="430" y="192" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_apartment.apartment_number" parent="dim_apartment" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="&lt;b&gt;UQ*&lt;/b&gt; apartment_number | SMALLINT" vertex="1">
+          <mxGeometry height="27" width="430" y="219" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_apartment.floor_no" parent="dim_apartment" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="floor_no | SMALLINT" vertex="1">
+          <mxGeometry height="27" width="430" y="246" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_apartment.area_sq_m" parent="dim_apartment" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="area_sq_m | NUMERIC(7,2)" vertex="1">
+          <mxGeometry height="27" width="430" y="273" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_apartment.passport_date" parent="dim_apartment" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="passport_date | DATE" vertex="1">
+          <mxGeometry height="27" width="430" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_apartment.technical_description" parent="dim_apartment" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="technical_description | TEXT" vertex="1">
+          <mxGeometry height="27" width="430" y="327" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_apartment.properties" parent="dim_apartment" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="properties | JSONB" vertex="1">
+          <mxGeometry height="27" width="430" y="354" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_apartment.tags" parent="dim_apartment" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="tags | TEXT[]" vertex="1">
+          <mxGeometry height="27" width="430" y="381" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_billing" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontSize=14;" value="fact_billing" vertex="1">
+          <mxGeometry height="300" width="450" x="650" y="320" as="geometry">
+            <mxRectangle height="30" width="110" x="650" y="320" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="fact_billing.billing_month" parent="fact_billing" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="&lt;b&gt;PK/FK&lt;/b&gt; billing_month | DATE" vertex="1">
+          <mxGeometry height="27" width="450" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_billing.apartment_key" parent="fact_billing" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="&lt;b&gt;PK/FK&lt;/b&gt; apartment_key | INTEGER" vertex="1">
+          <mxGeometry height="27" width="450" y="57" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_billing.service_key" parent="fact_billing" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="&lt;b&gt;PK/FK&lt;/b&gt; service_key | SMALLINT" vertex="1">
+          <mxGeometry height="27" width="450" y="84" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_billing.quality_key" parent="fact_billing" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="&lt;b&gt;FK&lt;/b&gt; quality_key | SMALLINT" vertex="1">
+          <mxGeometry height="27" width="450" y="111" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_billing.due_date" parent="fact_billing" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="&lt;b&gt;FK&lt;/b&gt; due_date | DATE" vertex="1">
+          <mxGeometry height="27" width="450" y="138" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_billing.snapshot_date" parent="fact_billing" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="&lt;b&gt;FK&lt;/b&gt; snapshot_date | DATE" vertex="1">
+          <mxGeometry height="27" width="450" y="165" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_billing.quantity" parent="fact_billing" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="quantity | NUMERIC(12,3) NULL" vertex="1">
+          <mxGeometry height="27" width="450" y="192" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_billing.charged_amount" parent="fact_billing" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="charged_amount | NUMERIC(14,2) NULL" vertex="1">
+          <mxGeometry height="27" width="450" y="219" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_billing.paid_amount" parent="fact_billing" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="paid_amount | NUMERIC(14,2)" vertex="1">
+          <mxGeometry height="27" width="450" y="246" as="geometry" />
+        </mxCell>
+        <mxCell id="fact_billing.paid_on_time_amount" parent="fact_billing" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="paid_on_time_amount | NUMERIC(14,2)" vertex="1">
+          <mxGeometry height="27" width="450" y="273" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_service" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontSize=14;" value="dim_service" vertex="1">
+          <mxGeometry height="111" width="430" x="1270" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_service.service_key" parent="dim_service" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="&lt;b&gt;PK&lt;/b&gt; service_key | SMALLINT" vertex="1">
+          <mxGeometry height="27" width="430" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_service.unit_code" parent="dim_service" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="unit_code | SMALLINT" vertex="1">
+          <mxGeometry height="27" width="430" y="57" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_service.calculation_basis" parent="dim_service" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="calculation_basis | SMALLINT" vertex="1">
+          <mxGeometry height="27" width="430" y="84" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_quality" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontSize=14;" value="dim_quality" vertex="1">
+          <mxGeometry height="84" width="430" x="1270" y="580" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_quality.quality_key" parent="dim_quality" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="&lt;b&gt;PK&lt;/b&gt; quality_key | SMALLINT" vertex="1">
+          <mxGeometry height="27" width="430" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="dim_quality.missing_reading" parent="dim_quality" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="missing_reading | BOOLEAN" vertex="1">
+          <mxGeometry height="27" width="430" y="57" as="geometry" />
+        </mxCell>
+        <mxCell id="date-bill" edge="1" parent="1" source="dim_date.date_key" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeColor=#666666;fontSize=11;labelBackgroundColor=#FFFFFF;" target="fact_billing.billing_month" value="1 : N">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="510" y="143" />
+              <mxPoint x="510" y="364" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="date-due" edge="1" parent="1" source="dim_date.date_key" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeColor=#666666;fontSize=11;labelBackgroundColor=#FFFFFF;" target="fact_billing.due_date" value="1 : N">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="540" y="143" />
+              <mxPoint x="540" y="472" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="date-snap" edge="1" parent="1" source="dim_date.date_key" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeColor=#666666;fontSize=11;labelBackgroundColor=#FFFFFF;" target="fact_billing.snapshot_date" value="1 : N">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="570" y="143" />
+              <mxPoint x="570" y="499" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="apt-fact" edge="1" parent="1" source="dim_apartment.apartment_key" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeColor=#666666;fontSize=11;labelBackgroundColor=#FFFFFF;" target="fact_billing.apartment_key" value="1 : N">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="600" y="564" />
+              <mxPoint x="600" y="391" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="svc-fact" edge="1" parent="1" source="dim_service.service_key" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeColor=#666666;fontSize=11;labelBackgroundColor=#FFFFFF;" target="fact_billing.service_key" value="1 : N">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1190" y="143" />
+              <mxPoint x="1190" y="418" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="q-fact" edge="1" parent="1" source="dim_quality.quality_key" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=ERone;endArrow=ERmany;startFill=0;endFill=0;strokeColor=#666666;fontSize=11;labelBackgroundColor=#FFFFFF;" target="fact_billing.quality_key" value="1 : N">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1160" y="624" />
+              <mxPoint x="1160" y="445" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="date-note" parent="1" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=14;spacing=5;" value="&lt;b&gt;578 дней&lt;/b&gt;&lt;br&gt;Одно физическое измерение в трёх ролях:&lt;br&gt;расчётный месяц, срок оплаты, дата среза.&lt;br&gt;Каждый FK обязателен (NOT NULL)." vertex="1">
+          <mxGeometry height="120" width="390" x="30" y="305" as="geometry" />
+        </mxCell>
+        <mxCell id="fact-note" parent="1" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=14;spacing=5;" value="&lt;b&gt;108 000 000 строк&lt;/b&gt;&lt;br&gt;1 000 000 квартир × 6 услуг × 18 месяцев.&lt;br&gt;PK: (billing_month, apartment_key, service_key).&lt;br&gt;Январь 2024 — июнь 2025 включительно.&lt;br&gt;NULL: начисление неизвестно из-за показаний.&lt;br&gt;Долг, переплата и покрытие — в v_billing." vertex="1">
+          <mxGeometry height="190" width="450" x="650" y="665" as="geometry" />
+        </mxCell>
+        <mxCell id="quality-note" parent="1" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=14;spacing=5;" value="&lt;b&gt;2 состояния качества&lt;/b&gt;&lt;br&gt;1 — complete: количество и сумма известны.&lt;br&gt;2 — missing_reading: оба значения NULL.&lt;br&gt;Статус 2 допустим только для услуг 1–3." vertex="1">
+          <mxGeometry height="110" width="430" x="1270" y="730" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="Служебные таблицы загрузки" id="page1">
+    <mxGraphModel dx="1875" dy="888" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1340" pageHeight="800" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="dataset" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontSize=14;" value="dataset" vertex="1">
+          <mxGeometry height="192" width="520" x="30" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="dataset.singleton" parent="dataset" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="&lt;b&gt;PK&lt;/b&gt; singleton | BOOLEAN" vertex="1">
+          <mxGeometry height="27" width="520" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="dataset.generator_version" parent="dataset" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="generator_version | INTEGER" vertex="1">
+          <mxGeometry height="27" width="520" y="57" as="geometry" />
+        </mxCell>
+        <mxCell id="dataset.apartment_count" parent="dataset" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="apartment_count | INTEGER" vertex="1">
+          <mxGeometry height="27" width="520" y="84" as="geometry" />
+        </mxCell>
+        <mxCell id="dataset.batch_size" parent="dataset" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="batch_size | INTEGER" vertex="1">
+          <mxGeometry height="27" width="520" y="111" as="geometry" />
+        </mxCell>
+        <mxCell id="dataset.snapshot_date" parent="dataset" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="snapshot_date | DATE" vertex="1">
+          <mxGeometry height="27" width="520" y="138" as="geometry" />
+        </mxCell>
+        <mxCell id="dataset.ready" parent="dataset" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="ready | BOOLEAN" vertex="1">
+          <mxGeometry height="27" width="520" y="165" as="geometry" />
+        </mxCell>
+        <mxCell id="load_batch" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontSize=14;" value="load_batch" vertex="1">
+          <mxGeometry height="165" width="540" x="730" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="load_batch.phase" parent="load_batch" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="&lt;b&gt;PK&lt;/b&gt; phase | TEXT" vertex="1">
+          <mxGeometry height="27" width="540" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="load_batch.month_no" parent="load_batch" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="&lt;b&gt;PK&lt;/b&gt; month_no | SMALLINT" vertex="1">
+          <mxGeometry height="27" width="540" y="57" as="geometry" />
+        </mxCell>
+        <mxCell id="load_batch.first_apartment" parent="load_batch" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="&lt;b&gt;PK&lt;/b&gt; first_apartment | INTEGER" vertex="1">
+          <mxGeometry height="27" width="540" y="84" as="geometry" />
+        </mxCell>
+        <mxCell id="load_batch.row_count" parent="load_batch" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="row_count | BIGINT" vertex="1">
+          <mxGeometry height="27" width="540" y="111" as="geometry" />
+        </mxCell>
+        <mxCell id="load_batch.completed_at" parent="load_batch" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=13;" value="completed_at | TIMESTAMPTZ" vertex="1">
+          <mxGeometry height="27" width="540" y="138" as="geometry" />
+        </mxCell>
+        <mxCell id="dataset-note" parent="1" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=14;spacing=5;" value="Одна строка: singleton=true.&lt;br&gt;generator_version=1; ready=false до проверки.&lt;br&gt;apartment_count=1 000 000 по умолчанию.&lt;br&gt;batch_size=50 000 квартир по умолчанию.&lt;br&gt;snapshot_date=31.07.2025.&lt;br&gt;&lt;br&gt;ready=true означает: завершена генерация, созданы и проверены PK/FK, проверены объёмы. Повторный запуск не меняет готовые данные." vertex="1">
+          <mxGeometry height="240" width="520" x="30" y="380" as="geometry" />
+        </mxCell>
+        <mxCell id="batch-note" parent="1" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=14;spacing=5;" value="PK: (phase, month_no, first_apartment).&lt;br&gt;phase: dimensions или fact.&lt;br&gt;month_no=-1 для измерений; 0..17 для факта.&lt;br&gt;first_apartment=0: малые измерения.&lt;br&gt;&lt;br&gt;Данные пакета и запись о завершении фиксируются одним COMMIT. Незавершённый пакет откатывается" vertex="1">
+          <mxGeometry height="240" width="540" x="730" y="380" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
