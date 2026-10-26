@@ -1,0 +1,61 @@
+\documentclass[12pt]{article}
+\usepackage{cmap}
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english,russian]{babel}
+\usepackage{geometry}
+\usepackage{titlesec}
+\usepackage{tocloft}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{amsmath}
+\setlength{\emergencystretch}{1em}
+\geometry{a4paper, left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+\pagenumbering{gobble}
+
+\begin{document}
+
+Мне нужно было удалить из базы лишние поля и добавить в таблицу фактов агрегатные строки.
+
+\section*{1. Какие поля убрал}
+
+\noindent\textbf{Из \texttt{dim\_date}:}
+\begin{itemize}
+    \item \texttt{day\_no} - Конкретные дни излишни.
+    \item \texttt{quarter\_no} - Районы лишние для аналитики задолженностей и оплат по городам.
+    \item \texttt{month\_start} - Начало месяца есть в \texttt{billing\_month}.
+\end{itemize}
+
+\noindent\textbf{Из \texttt{dim\_apartment}:}
+\begin{itemize}
+    \item \texttt{source\_apartment\_id} - Дублирует \texttt{apartment\_key}.
+    \item \texttt{passport\_date} - Не используется в аналитике. Не анализируем даты регистрации квартир
+    \item \texttt{floor\_no} - Не изучаем данные по этажам.
+    \item \texttt{street}, \texttt{house\_number}, \texttt{apartment\_number} - Не анализируем конкретные квартиры и адреса.
+\end{itemize}
+
+\noindent\textbf{Из \texttt{fact\_billing}:}
+\begin{itemize}
+    \item \texttt{due\_date} - Срок оплаты можно вычислить из расчётного месяца: 10-е число следующего месяца.
+    \item \texttt{snapshot\_date} - Дата снимка одна для всей базы, 31 июля 2025 года.
+\end{itemize}
+
+\section*{2. Какие агрегированные строки добавляем}
+
+Добавил такие агрегаты:
+
+\begin{center}
+\textbf{Год $\times$ город $\times$ услуга $\times$ интервал просрочки.}
+\end{center}
+
+Интервалов три: до 30 дней, 31--90 дней и более 90 дней.
+
+Для каждой группы заранее вычисляем два показателя: общую сумму задолженности и количество записей с долгом.
+
+Эти значения рассчитываем по исходным строкам один раз и сохраняем дополнительными строками в \texttt{fact\_billing}. Чтобы отличать их от обычных начислений, используем отрицательные \texttt{apartment\_key}.
+
+
+\section*{3. Пример}
+
+
+\end{document}
