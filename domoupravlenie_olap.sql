@@ -1,6 +1,18 @@
 \set ON_ERROR_STOP on
 \encoding UTF8
 \timing on
+
+
+\if :{?db_name}
+\else
+  \set db_name domoupravlenie
+\endif
+SELECT NOT EXISTS (SELECT 1 FROM pg_database WHERE datname=:'db_name') AS need_database \gset
+\if :need_database
+  CREATE DATABASE :"db_name" WITH ENCODING 'UTF8' TEMPLATE template0;
+\endif
+\connect :db_name
+\encoding UTF8
 \if :{?apartments}
 \else
   \set apartments 1000000
@@ -9,7 +21,7 @@
 \else
   \set batch_size 50000
 \endif
-SET application_name = 'domoupravlenie_olap_v1';
+SET application_name = 'domoupravlenie';
 SET timezone = 'UTC';
 SET search_path = olap, pg_catalog;
 
@@ -38,7 +50,7 @@ CREATE TABLE olap.dataset (
 );
 INSERT INTO olap.dataset VALUES (true,1,:apartments,:batch_size,'2025-07-31',false);
 CREATE TABLE olap.load_batch (
- phase text NOT NULL CHECK (phase IN ('dimensions','fact')),
+ phase text NOT NULL CHECK (phase IN ('dimensions','fact','aggregates')),
  month_no smallint NOT NULL CHECK (month_no BETWEEN -1 AND 17),
  first_apartment integer NOT NULL,
  row_count bigint NOT NULL CHECK (row_count>0),
@@ -48,19 +60,17 @@ CREATE TABLE olap.load_batch (
 CREATE TABLE olap.dim_date (
  date_key date PRIMARY KEY,
  year_no smallint NOT NULL,
- quarter_no smallint NOT NULL CHECK (quarter_no BETWEEN 1 AND 4),
  month_no smallint NOT NULL CHECK (month_no BETWEEN 1 AND 12),
- month_start date NOT NULL,
- day_no smallint NOT NULL CHECK (day_no BETWEEN 1 AND 31),
  CHECK (isfinite(date_key)),
- CHECK (year_no=extract(year FROM date_key) AND month_no=extract(month FROM date_key)
-  AND quarter_no=extract(quarter FROM date_key) AND day_no=extract(day FROM date_key)
-  AND month_start=date_trunc('month',date_key::timestamp)::date)
+ CHECK (extract(day FROM date_key)=1),
+ CHECK (year_no=extract(year FROM date_key) AND month_no=extract(month FROM date_key))
 );
+
 -- unit_code: 1=m3, 2=kWh, 3=m2, 4=subscription.
 -- calculation_basis: 1=meter, 2=area, 3=fixed.
 -- service_key: 1=cold water, 2=hot water, 3=electricity,
 --              4=heating, 5=yard cleaning, 6=intercom.
+
 CREATE TABLE olap.dim_service (
  service_key smallint PRIMARY KEY CHECK (service_key BETWEEN 1 AND 6),
  unit_code smallint NOT NULL CHECK (unit_code BETWEEN 1 AND 4),
@@ -69,7 +79,9 @@ CREATE TABLE olap.dim_service (
         (calculation_basis=2 AND unit_code=3) OR
         (calculation_basis=3 AND unit_code=4))
 );
+
 -- quality_key: 1=complete, 2=missing_reading.
+
 CREATE TABLE olap.dim_quality (
  quality_key smallint PRIMARY KEY CHECK (quality_key IN (1,2)),
  missing_reading boolean NOT NULL,
@@ -88,16 +100,10 @@ $$;
 
 CREATE TABLE olap.dim_apartment (
  apartment_key integer PRIMARY KEY,
- source_apartment_id bigint NOT NULL UNIQUE,
  building_id integer NOT NULL CHECK (building_id>0),
  city_name varchar(80) NOT NULL,
  district_name varchar(80) NOT NULL,
- street varchar(120) NOT NULL,
- house_number varchar(20) NOT NULL,
- apartment_number smallint NOT NULL CHECK (apartment_number>0),
- floor_no smallint NOT NULL,
  area_sq_m numeric(7,2) NOT NULL CHECK (area_sq_m>0 AND area_sq_m<10000),
- passport_date date NOT NULL CHECK (passport_date=DATE '2024-01-01'),
  technical_description text NOT NULL CHECK (length(btrim(technical_description))>=60),
  properties jsonb NOT NULL CHECK (jsonb_typeof(properties)='object'),
  tags text[] NOT NULL CHECK (olap.valid_tags(tags)),
@@ -105,8 +111,7 @@ CREATE TABLE olap.dim_apartment (
  CHECK (jsonb_typeof(properties->'energy_class')='string'
     AND properties->>'energy_class' IN ('A','B','C','D','E')),
  CHECK (jsonb_typeof(properties->'renovated')='boolean'), 
- CHECK (properties->'schema_version'='1'::jsonb),
- UNIQUE (building_id,apartment_number)
+ CHECK (properties->'schema_version'='1'::jsonb)
 );
 
 
@@ -116,17 +121,12 @@ CREATE TABLE olap.fact_billing (
  apartment_key integer NOT NULL,
  service_key smallint NOT NULL,
  quality_key smallint NOT NULL,
- due_date date NOT NULL,
- snapshot_date date NOT NULL,
  quantity numeric(12,3),
  charged_amount numeric(14,2),
  paid_amount numeric(14,2) NOT NULL,
  paid_on_time_amount numeric(14,2) NOT NULL,
  CHECK (billing_month>=DATE '2024-01-01' AND billing_month<DATE '2025-07-01'
     AND extract(day FROM billing_month)=1),
- CHECK (snapshot_date=DATE '2025-07-31'),
- CHECK (due_date=(billing_month+interval '1 month 9 days')::date
-    AND due_date<=snapshot_date),
  CHECK ((quality_key=1 AND quantity IS NOT NULL AND charged_amount IS NOT NULL)
      OR (quality_key=2 AND quantity IS NULL AND charged_amount IS NULL AND service_key IN (1,2,3))),
  CHECK (quantity>=0 AND quantity<1000000000),
@@ -187,14 +187,14 @@ BEGIN
  IF (SELECT ready FROM olap.dataset WHERE singleton) THEN RETURN; END IF;
  IF NOT EXISTS (SELECT 1 FROM olap.load_batch WHERE phase='dimensions' AND first_apartment=0) THEN
    INSERT INTO olap.dim_date
-   SELECT calendar_day::date,extract(year FROM calendar_day),extract(quarter FROM calendar_day),extract(month FROM calendar_day),
-          date_trunc('month',calendar_day)::date,extract(day FROM calendar_day)
-   FROM generate_series(timestamp '2024-01-01',timestamp '2025-07-31',interval '1 day') calendar_day;
+   SELECT month_start::date, extract(year FROM month_start)::smallint,
+          extract(month FROM month_start)::smallint
+   FROM generate_series(timestamp '2024-01-01', timestamp '2025-06-01', interval '1 month') month_start;
    INSERT INTO olap.dim_service VALUES
     (1,1,1), (2,1,1), (3,2,1),
     (4,3,2), (5,3,2), (6,4,3);
    INSERT INTO olap.dim_quality VALUES (1,false), (2,true);
-   INSERT INTO olap.load_batch VALUES ('dimensions',-1,0,586,clock_timestamp());
+   INSERT INTO olap.load_batch VALUES ('dimensions',-1,0,26,clock_timestamp());
    COMMIT;
  END IF;
  lo:=1;
@@ -202,12 +202,10 @@ BEGIN
    hi:=least(n,lo+step_n-1);
    IF NOT EXISTS (SELECT 1 FROM olap.load_batch WHERE phase='dimensions' AND first_apartment=lo) THEN
      INSERT INTO olap.dim_apartment
-     SELECT a,a,building,
+     SELECT a, building,
        'Город '||lpad((1+(building-1)/1000)::text,2,'0'),
        'Район '||(1+(building-1)%10),
-       'Улица '||(1+((building-1)%1000)/10), (1+(building-1)%10)::text,
-       1+(a-1)%100, 1+((a-1)%100)/4,
-       round(28+olap.u01(a::text,'area')*112,2),'2024-01-01',
+       round(28+olap.u01(a::text,'area')*112,2),
        'Технический паспорт квартиры '||a||'. '||
        CASE WHEN a%20=0 THEN 'Обнаружена протечка труб в санузле. Требуется проверка соединений.'
             WHEN a%7=0 THEN 'Выполнено утепление окон. Замечаний к инженерным сетям нет.'
@@ -262,7 +260,6 @@ BEGIN
          FROM charges
        )
        SELECT d,apartment_key,service_key,quality,
-         (d+interval '1 month 9 days')::date,DATE '2025-07-31',
          CASE WHEN quality=1 THEN qty END,
          CASE WHEN quality=1 THEN charge END,
          paid,
@@ -279,7 +276,85 @@ BEGIN
 END $$;
 CALL olap.load_data();
 
+-- Aggregate rows inside the SAME fact table, with no additional physical columns.
+-- apartment_key > 0: real apartment; apartment_key < 0: special city/aging-bucket member.
+-- For aggregate rows, quantity=COUNT(positive-debt detail rows),
+-- charged_amount=SUM(positive debt), paid_amount=0, paid_on_time_amount=0.
+-- bucket 1: <=30 d; 2: 31..90 d; 3: >90 d as of dataset.snapshot_date.
+-- One logical aggregate per (year, city, service, aging bucket).
 
+CREATE OR REPLACE PROCEDURE olap.load_aging_aggregates() LANGUAGE plpgsql AS $$
+DECLARE inserted bigint; expected bigint; cities bigint;
+BEGIN
+ IF (SELECT ready FROM olap.dataset WHERE singleton) THEN RETURN; END IF;
+ IF EXISTS (SELECT 1 FROM olap.load_batch WHERE phase='aggregates' AND first_apartment=0) THEN
+   RETURN;
+ END IF;
+
+ -- Dimension keys are distinct per (city,bucket), and remain valid FK targets.
+ INSERT INTO olap.dim_apartment
+   (apartment_key,building_id,city_name,district_name,area_sq_m,
+    technical_description,properties,tags)
+ SELECT -((city_no-1)*3+b.bucket), 100000+(city_no-1)*3+b.bucket,
+        c.city_name, 'Все районы', 1::numeric(7,2),
+        'Служебный участник измерения для агрегирования задолженности по городу и интервалу просрочки; не является квартирой.',
+        jsonb_build_object('schema_version',1,'energy_class','C','renovated',false,
+          'aggregate_kind','aging_debt','aging_bucket',b.bucket),
+        ARRAY['aggregate']::text[]
+ FROM (
+   SELECT DISTINCT city_name, split_part(city_name,' ',2)::integer AS city_no
+   FROM olap.dim_apartment WHERE apartment_key>0
+ ) c CROSS JOIN (VALUES (1),(2),(3)) AS b(bucket);
+
+ -- Include zero-valued groups so each city/service has the predictable four
+ -- (year,bucket) combinations: 2024/3 and 2025/1,2,3.
+ WITH debt_rows AS (
+   SELECT extract(year FROM f.billing_month)::integer AS year_no,
+          a.city_name, f.service_key,
+          CASE
+            WHEN d.snapshot_date - (f.billing_month+interval '1 month 9 days')::date <=30 THEN 1
+            WHEN d.snapshot_date - (f.billing_month+interval '1 month 9 days')::date <=90 THEN 2
+            ELSE 3
+          END AS bucket,
+          (f.charged_amount-f.paid_amount) AS debt
+   FROM olap.fact_billing f
+   JOIN olap.dim_apartment a ON a.apartment_key=f.apartment_key
+   CROSS JOIN olap.dataset d
+   WHERE f.apartment_key>0 AND f.quality_key=1 AND f.charged_amount>f.paid_amount
+ ), sums AS (
+   SELECT year_no,city_name,service_key,bucket,
+          count(*)::numeric(12,3) AS debt_row_count,
+          sum(debt)::numeric(14,2) AS known_debt
+   FROM debt_rows
+   GROUP BY year_no,city_name,service_key,bucket
+ ), city_keys AS (
+   SELECT apartment_key,city_name,(properties->>'aging_bucket')::integer AS bucket
+   FROM olap.dim_apartment WHERE apartment_key<0
+ ), grid AS (
+   SELECT g.year_no,g.bucket,c.city_name,c.apartment_key,s.service_key
+   FROM city_keys c
+   CROSS JOIN olap.dim_service s
+   JOIN (VALUES (2024,3),(2025,1),(2025,2),(2025,3)) g(year_no,bucket)
+     ON g.bucket=c.bucket
+ )
+ INSERT INTO olap.fact_billing
+   (billing_month,apartment_key,service_key,quality_key,
+    quantity,charged_amount,paid_amount,paid_on_time_amount)
+ SELECT make_date(g.year_no,1,1),g.apartment_key,g.service_key,1,
+        coalesce(x.debt_row_count,0),coalesce(x.known_debt,0),0,0
+ FROM grid g
+ LEFT JOIN sums x ON x.year_no=g.year_no AND x.city_name=g.city_name
+   AND x.service_key=g.service_key AND x.bucket=g.bucket;
+ GET DIAGNOSTICS inserted=ROW_COUNT;
+ SELECT count(DISTINCT city_name) INTO cities FROM olap.dim_apartment WHERE apartment_key>0;
+ expected:=cities*6*4;
+ IF inserted<>expected THEN
+   RAISE EXCEPTION 'Annual aging aggregates: inserted %, expected %',inserted,expected;
+ END IF;
+ INSERT INTO olap.load_batch VALUES ('aggregates',-1,0,inserted,clock_timestamp());
+ COMMIT;
+END $$;
+CALL olap.load_aging_aggregates();
 
 SELECT NOT ready AS need_finalize FROM olap.dataset WHERE singleton \gset
 \if :need_finalize
@@ -288,10 +363,6 @@ ALTER TABLE olap.fact_billing ADD CONSTRAINT pk_fact_billing
  PRIMARY KEY (billing_month,apartment_key,service_key);
 ALTER TABLE olap.fact_billing ADD CONSTRAINT fk_billing_month
  FOREIGN KEY (billing_month) REFERENCES olap.dim_date(date_key);
-ALTER TABLE olap.fact_billing ADD CONSTRAINT fk_due_date
- FOREIGN KEY (due_date) REFERENCES olap.dim_date(date_key);
-ALTER TABLE olap.fact_billing ADD CONSTRAINT fk_snapshot_date
- FOREIGN KEY (snapshot_date) REFERENCES olap.dim_date(date_key);
 ALTER TABLE olap.fact_billing ADD CONSTRAINT fk_apartment
  FOREIGN KEY (apartment_key) REFERENCES olap.dim_apartment(apartment_key);
 ALTER TABLE olap.fact_billing ADD CONSTRAINT fk_service
@@ -304,15 +375,24 @@ DO $$
 DECLARE n bigint; actual bigint;
 BEGIN
  SELECT apartment_count INTO n FROM olap.dataset WHERE singleton;
- SELECT count(*) INTO actual FROM olap.dim_apartment;
- IF actual<>n THEN RAISE EXCEPTION 'Apartment count: % expected %',actual,n; END IF;
- SELECT count(*) INTO actual FROM olap.fact_billing;
- IF actual<>n*108 THEN RAISE EXCEPTION 'Fact count: % expected %',actual,n*108; END IF;
- IF EXISTS (SELECT 1 FROM olap.fact_billing GROUP BY billing_month HAVING count(*)<>n*6) THEN
+ SELECT count(*) INTO actual FROM olap.dim_apartment WHERE apartment_key>0;
+ IF actual<>n THEN RAISE EXCEPTION 'Real apartment count: % expected %',actual,n; END IF;
+ SELECT count(*) INTO actual FROM olap.fact_billing WHERE apartment_key>0;
+ IF actual<>n*108 THEN RAISE EXCEPTION 'Detail fact count: % expected %',actual,n*108; END IF;
+ IF EXISTS (SELECT 1 FROM olap.fact_billing WHERE apartment_key>0
+            GROUP BY billing_month HAVING count(*)<>n*6) THEN
    RAISE EXCEPTION 'Incomplete billing month';
  END IF;
  IF (SELECT sum(row_count) FROM olap.load_batch WHERE phase='fact')<>actual THEN
-   RAISE EXCEPTION 'Checkpoint mismatch';
+   RAISE EXCEPTION 'Detail checkpoint mismatch';
+ END IF;
+ SELECT count(DISTINCT city_name) INTO n FROM olap.dim_apartment WHERE apartment_key>0;
+ SELECT count(*) INTO actual FROM olap.dim_apartment WHERE apartment_key<0;
+ IF actual<>n*3 THEN RAISE EXCEPTION 'Aggregate dimension keys: % expected %',actual,n*3; END IF;
+ SELECT count(*) INTO actual FROM olap.fact_billing WHERE apartment_key<0;
+ IF actual<>n*24 THEN RAISE EXCEPTION 'Aggregate fact count: % expected %',actual,n*24; END IF;
+ IF (SELECT sum(row_count) FROM olap.load_batch WHERE phase='aggregates')<>actual THEN
+   RAISE EXCEPTION 'Aggregate checkpoint mismatch';
  END IF;
 END $$;
 
@@ -321,6 +401,9 @@ END $$;
 UPDATE olap.dataset SET ready=true WHERE singleton;
 COMMIT;
 \endif
+CREATE INDEX IF NOT EXISTS ix_fact_billing_aggregates
+ ON olap.fact_billing (billing_month,service_key,apartment_key)
+ WHERE apartment_key<0;
 ANALYZE olap.dim_apartment;
 ANALYZE olap.dim_service;
 ANALYZE olap.dim_quality;
@@ -334,7 +417,24 @@ SELECT f.*,
  CASE WHEN charged_amount IS NOT NULL THEN greatest(charged_amount-paid_amount,0) END AS debt_amount,
  CASE WHEN charged_amount IS NOT NULL THEN greatest(paid_amount-charged_amount,0) END AS credit_amount,
  CASE WHEN charged_amount IS NOT NULL THEN least(charged_amount,paid_amount) END AS covered_amount
-FROM olap.fact_billing f;
+FROM olap.fact_billing f
+WHERE f.apartment_key > 0;
+
+-- Synthetic aggregate records are never interpreted as apartment charges.
+CREATE OR REPLACE VIEW olap.v_aging_debt AS
+SELECT d.snapshot_date, extract(year FROM f.billing_month)::integer AS year_no,
+       a.city_name, f.service_key,
+       CASE (a.properties->>'aging_bucket')::integer
+         WHEN 1 THEN '01: 0-30'
+         WHEN 2 THEN '02: 31-90'
+         WHEN 3 THEN '03: 91+'
+       END AS aging_bucket,
+       f.quantity::bigint AS unpaid_billing_rows,
+       f.charged_amount AS known_debt
+FROM olap.fact_billing f
+JOIN olap.dim_apartment a ON a.apartment_key=f.apartment_key
+CROSS JOIN olap.dataset d
+WHERE f.apartment_key < 0;
 
 CREATE OR REPLACE VIEW olap.v_service AS
 SELECT
@@ -385,7 +485,8 @@ SELECT
 FROM olap.dim_quality;
 
 
-SELECT apartment_count, apartment_count::bigint*108 AS verified_fact_rows,
+SELECT apartment_count, apartment_count::bigint*108 AS detail_fact_rows,
+       (SELECT count(*) FROM olap.fact_billing WHERE apartment_key<0) AS aggregate_rows,
        snapshot_date, ready,apartment_count >= 1000000 AS meets_assignment_volume
 FROM olap.dataset;
 SELECT pg_size_pretty(pg_total_relation_size('olap.fact_billing')) AS fact_size_with_indexes;
