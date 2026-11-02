@@ -50,7 +50,7 @@ CREATE TABLE olap.dataset (
 );
 INSERT INTO olap.dataset VALUES (true,1,:apartments,:batch_size,'2025-07-31',false);
 CREATE TABLE olap.load_batch (
- phase text NOT NULL CHECK (phase IN ('dimensions','fact','aggregates')),
+ phase text NOT NULL CHECK (phase IN ('dimensions','fact','aggregates','payment_aggregates')),
  month_no smallint NOT NULL CHECK (month_no BETWEEN -1 AND 17),
  first_apartment integer NOT NULL,
  row_count bigint NOT NULL CHECK (row_count>0),
@@ -276,12 +276,7 @@ BEGIN
 END $$;
 CALL olap.load_data();
 
--- Aggregate rows inside the SAME fact table, with no additional physical columns.
--- apartment_key > 0: real apartment; apartment_key < 0: special city/aging-bucket member.
--- For aggregate rows, quantity=COUNT(positive-debt detail rows),
--- charged_amount=SUM(positive debt), paid_amount=0, paid_on_time_amount=0.
--- bucket 1: <=30 d; 2: 31..90 d; 3: >90 d as of dataset.snapshot_date.
--- One logical aggregate per (year, city, service, aging bucket).
+
 
 CREATE OR REPLACE PROCEDURE olap.load_aging_aggregates() LANGUAGE plpgsql AS $$
 DECLARE inserted bigint; expected bigint; cities bigint;
@@ -291,7 +286,9 @@ BEGIN
    RETURN;
  END IF;
 
- -- Dimension keys are distinct per (city,bucket), and remain valid FK targets.
+
+
+
  INSERT INTO olap.dim_apartment
    (apartment_key,building_id,city_name,district_name,area_sq_m,
     technical_description,properties,tags)
@@ -306,8 +303,8 @@ BEGIN
    FROM olap.dim_apartment WHERE apartment_key>0
  ) c CROSS JOIN (VALUES (1),(2),(3)) AS b(bucket);
 
- -- Include zero-valued groups so each city/service has the predictable four
- -- (year,bucket) combinations: 2024/3 and 2025/1,2,3.
+
+
  WITH debt_rows AS (
    SELECT extract(year FROM f.billing_month)::integer AS year_no,
           a.city_name, f.service_key,
@@ -356,6 +353,63 @@ BEGIN
 END $$;
 CALL olap.load_aging_aggregates();
 
+
+CREATE OR REPLACE PROCEDURE olap.load_payment_aggregates() LANGUAGE plpgsql AS $$
+DECLARE inserted bigint; expected bigint; cities bigint;
+BEGIN
+ IF (SELECT ready FROM olap.dataset WHERE singleton) THEN RETURN; END IF;
+ IF EXISTS (SELECT 1 FROM olap.load_batch WHERE phase='payment_aggregates' AND first_apartment=0) THEN
+   RETURN;
+ END IF;
+
+ INSERT INTO olap.dim_apartment
+   (apartment_key,building_id,city_name,district_name,area_sq_m,
+    technical_description,properties,tags)
+ SELECT -(100+c.city_no), 200000+c.city_no, c.city_name, 'Все районы', 1::numeric(7,2),
+        'Служебная запись для хранения агрегированных платежей по городу. Используется для аналитических отчётов и не соответствует реальной квартире.',
+        jsonb_build_object('schema_version',1,'energy_class','C','renovated',false,
+          'aggregate_kind','annual_payments'),
+        ARRAY['aggregate']::text[]
+ FROM (
+   SELECT DISTINCT city_name, split_part(city_name,' ',2)::integer AS city_no
+   FROM olap.dim_apartment WHERE apartment_key>0
+ ) c;
+
+ WITH sums AS (
+   SELECT extract(year FROM f.billing_month)::integer AS year_no,
+          a.city_name, f.service_key,
+          sum(f.paid_amount)::numeric(14,2) AS total_paid,
+          sum(f.paid_on_time_amount)::numeric(14,2) AS total_paid_on_time
+   FROM olap.fact_billing f
+   JOIN olap.dim_apartment a ON a.apartment_key=f.apartment_key
+   WHERE f.apartment_key>0
+   GROUP BY extract(year FROM f.billing_month)::integer,a.city_name,f.service_key
+ ), grid AS (
+   SELECT y.year_no,a.apartment_key,a.city_name,s.service_key
+   FROM olap.dim_apartment a
+   CROSS JOIN (VALUES (2024),(2025)) y(year_no)
+   CROSS JOIN olap.dim_service s
+   WHERE a.properties->>'aggregate_kind'='annual_payments'
+ )
+ INSERT INTO olap.fact_billing
+   (billing_month,apartment_key,service_key,quality_key,
+    quantity,charged_amount,paid_amount,paid_on_time_amount)
+ SELECT make_date(g.year_no,1,1),g.apartment_key,g.service_key,1,
+        0,0,coalesce(x.total_paid,0),coalesce(x.total_paid_on_time,0)
+ FROM grid g
+ LEFT JOIN sums x ON x.year_no=g.year_no AND x.city_name=g.city_name
+   AND x.service_key=g.service_key;
+ GET DIAGNOSTICS inserted=ROW_COUNT;
+ SELECT count(DISTINCT city_name) INTO cities FROM olap.dim_apartment WHERE apartment_key>0;
+ expected:=cities*6*2;
+ IF inserted<>expected THEN
+   RAISE EXCEPTION 'Annual payment aggregates: inserted %, expected %',inserted,expected;
+ END IF;
+ INSERT INTO olap.load_batch VALUES ('payment_aggregates',-1,0,inserted,clock_timestamp());
+ COMMIT;
+END $$;
+CALL olap.load_payment_aggregates();
+
 SELECT NOT ready AS need_finalize FROM olap.dataset WHERE singleton \gset
 \if :need_finalize
 BEGIN;
@@ -387,12 +441,20 @@ BEGIN
    RAISE EXCEPTION 'Detail checkpoint mismatch';
  END IF;
  SELECT count(DISTINCT city_name) INTO n FROM olap.dim_apartment WHERE apartment_key>0;
- SELECT count(*) INTO actual FROM olap.dim_apartment WHERE apartment_key<0;
+ SELECT count(*) INTO actual FROM olap.dim_apartment WHERE apartment_key BETWEEN -99 AND -1;
  IF actual<>n*3 THEN RAISE EXCEPTION 'Aggregate dimension keys: % expected %',actual,n*3; END IF;
- SELECT count(*) INTO actual FROM olap.fact_billing WHERE apartment_key<0;
+ SELECT count(*) INTO actual FROM olap.fact_billing WHERE apartment_key BETWEEN -99 AND -1;
  IF actual<>n*24 THEN RAISE EXCEPTION 'Aggregate fact count: % expected %',actual,n*24; END IF;
  IF (SELECT sum(row_count) FROM olap.load_batch WHERE phase='aggregates')<>actual THEN
    RAISE EXCEPTION 'Aggregate checkpoint mismatch';
+ END IF;
+ SELECT count(*) INTO actual FROM olap.dim_apartment
+ WHERE properties->>'aggregate_kind'='annual_payments';
+ IF actual<>n THEN RAISE EXCEPTION 'Payment aggregate dimension keys: % expected %',actual,n; END IF;
+ SELECT count(*) INTO actual FROM olap.fact_billing WHERE apartment_key<=-100;
+ IF actual<>n*12 THEN RAISE EXCEPTION 'Payment aggregate fact count: % expected %',actual,n*12; END IF;
+ IF (SELECT sum(row_count) FROM olap.load_batch WHERE phase='payment_aggregates')<>actual THEN
+   RAISE EXCEPTION 'Payment aggregate checkpoint mismatch';
  END IF;
 END $$;
 
@@ -401,9 +463,12 @@ END $$;
 UPDATE olap.dataset SET ready=true WHERE singleton;
 COMMIT;
 \endif
+CREATE INDEX IF NOT EXISTS ix_fact_billing_payments
+ ON olap.fact_billing (billing_month,apartment_key,service_key)
+ WHERE apartment_key<=-100;
 CREATE INDEX IF NOT EXISTS ix_fact_billing_aggregates
  ON olap.fact_billing (billing_month,service_key,apartment_key)
- WHERE apartment_key<0;
+ WHERE apartment_key BETWEEN -99 AND -1;
 ANALYZE olap.dim_apartment;
 ANALYZE olap.dim_service;
 ANALYZE olap.dim_quality;
@@ -420,7 +485,7 @@ SELECT f.*,
 FROM olap.fact_billing f
 WHERE f.apartment_key > 0;
 
--- Synthetic aggregate records are never interpreted as apartment charges.
+
 CREATE OR REPLACE VIEW olap.v_aging_debt AS
 SELECT d.snapshot_date, extract(year FROM f.billing_month)::integer AS year_no,
        a.city_name, f.service_key,
@@ -434,7 +499,17 @@ SELECT d.snapshot_date, extract(year FROM f.billing_month)::integer AS year_no,
 FROM olap.fact_billing f
 JOIN olap.dim_apartment a ON a.apartment_key=f.apartment_key
 CROSS JOIN olap.dataset d
-WHERE f.apartment_key < 0;
+WHERE f.apartment_key < 0 AND a.properties->>'aggregate_kind'='aging_debt';
+
+
+CREATE OR REPLACE VIEW olap.v_annual_payments AS
+SELECT extract(year FROM f.billing_month)::integer AS year_no,
+       a.city_name, f.service_key,
+       f.paid_amount AS total_paid,
+       f.paid_on_time_amount AS total_paid_on_time
+FROM olap.fact_billing f
+JOIN olap.dim_apartment a ON a.apartment_key=f.apartment_key
+WHERE f.apartment_key < 0 AND a.properties->>'aggregate_kind'='annual_payments';
 
 CREATE OR REPLACE VIEW olap.v_service AS
 SELECT
@@ -486,7 +561,8 @@ FROM olap.dim_quality;
 
 
 SELECT apartment_count, apartment_count::bigint*108 AS detail_fact_rows,
-       (SELECT count(*) FROM olap.fact_billing WHERE apartment_key<0) AS aggregate_rows,
+       (SELECT count(*) FROM olap.fact_billing WHERE apartment_key BETWEEN -99 AND -1) AS aging_aggregate_rows,
+       (SELECT count(*) FROM olap.fact_billing WHERE apartment_key<=-100) AS payment_aggregate_rows,
        snapshot_date, ready,apartment_count >= 1000000 AS meets_assignment_volume
 FROM olap.dataset;
 SELECT pg_size_pretty(pg_total_relation_size('olap.fact_billing')) AS fact_size_with_indexes;

@@ -140,8 +140,50 @@ WHERE s.calculation_basis=1
 GROUP BY t.date_key,a.city_name,s.service_key;
 
 
--- BONUS. Общая задолженность по годам и городам без сканирования 108 млн детальных строк.
+-- Общая задолженность по годам и городам без сканирования 108 млн детальных строк.
 SELECT year_no, city_name, sum(known_debt) AS debt
 FROM olap.v_aging_debt
 GROUP BY year_no, city_name
 ORDER BY year_no, city_name;
+
+
+
+--- Общая сумма платежей за 2024 год
+
+SELECT
+    billing_month,
+    apartment_key,
+    service_key,
+    paid_amount
+FROM olap.v_billing
+WHERE billing_month >= DATE '2024-01-01'
+  AND billing_month < DATE '2025-01-01'
+ORDER BY billing_month;
+
+
+--- Долги
+SELECT
+    ROUND(SUM(charged_amount), 2) AS total_debt_2024
+FROM olap.v_aging_debt
+WHERE EXTRACT(YEAR FROM billing_month) = 2024;
+
+
+--- Платежи за год по агрегатам
+SELECT
+    year_no,
+    city_name,
+    service_key,
+    total_paid
+FROM olap.v_annual_payments
+WHERE year_no = 2024
+ORDER BY city_name, service_key;
+
+
+--- Агрегаты для месяцев (сейчас нет в скрипте создания базы)
+SELECT
+city_name,
+service_key,
+total_paid
+FROM olap.v_monthly_payments
+WHERE billing_month = DATE '2024-01-01'
+ORDER BY city_name, service_key;
